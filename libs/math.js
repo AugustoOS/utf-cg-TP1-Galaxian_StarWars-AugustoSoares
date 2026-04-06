@@ -1,0 +1,15 @@
+function translation(tx, ty, tz) {  // translação do object
+    return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, tx, ty, tz, 1]);
+}
+
+function ortho(l, r, b, t, n, f) {  // left, right, bottom, top, near, far
+
+    const mx = 2 / (r - l);
+    const my = 2 / (t - b);
+    const mz = -2 / (f - n); // no webgl se usa orientação mão direita, por isso é negativo
+    const tx = -(r + l) / (r - l);
+    const ty = -(t + b) / (t - b);
+    const tz = -(f + n) / (f - n);
+
+    return new Float32Array([mx, 0, 0, 0, 0, my, 0, 0, 0, 0, mz, 0, tx, ty, tz, 1]); // column order
+}

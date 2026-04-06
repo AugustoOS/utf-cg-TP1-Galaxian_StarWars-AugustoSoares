@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@keyframes entrance {
+    0% {
+        transform: translate(-50%, 100vh);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -20vh);
+        opacity: 1;
+    }
+}
+
+body {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    min-height: 100vh;
+    background: #070217;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+    overflow: hidden;
+    position: relative;
+}
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+body::before {
+    background-image:
+        radial-gradient(circle at 8% 18%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 22% 72%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 35% 26%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 48% 58%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 62% 12%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 78% 34%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 88% 80%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 94% 22%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 14% 88%, #ffffff 0 1px, transparent 1.5px),
+        radial-gradient(circle at 70% 68%, #ffffff 0 1px, transparent 1.5px);
+    opacity: 0.85;
+}
+
+body::after {
+    background-image:
+        radial-gradient(circle at 5% 45%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 32% 84%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 44% 40%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 57% 73%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 73% 16%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 84% 56%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px),
+        radial-gradient(circle at 96% 90%, rgba(255, 255, 255, 0.95) 0 2px, transparent 2.5px);
+    opacity: 0.55;
+}
+
+.menu-container {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: entrance 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    z-index: 1;
+}
+
+.icon-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+}
+
+.galaxian-logo {
+    width: 300px;
+    height: auto;
+}
+
+.starwars-logo {
+    margin-top: 20px;
+    width: 160px;
+    height: auto;
+}
+
+.icon-version {
+    color: #ac00b1;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-left: 8px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    letter-spacing: 1px;
+    transform: translateY(-2px);
+    white-space: nowrap;
+    right: 10px;
+    z-index: 10;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+#mute-btn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+#mute-btn img {
+    width: 25px;
+    height: 25px;
+    filter: invert(1);
+}
+
+.but-start {
+    margin-top: 100px;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    color: #070217;
+    background: #FFFB00;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+}

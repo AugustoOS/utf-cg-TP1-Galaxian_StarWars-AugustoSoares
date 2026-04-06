@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="AugustoOS">
+    <title>Galaxian</title>
+    <link rel="stylesheet" href="game_style.css">
+    <script src="../libs/math.js" defer></script>
+    <script src="../libs/webgl.js" defer></script>
+    <script src="game_structs.js" defer></script>
+    <script src="game_boundary.js" defer></script>
+    <script src="game_enemy_layout.js" defer></script>
+    <script src="game_enemy_brakes.js" defer></script>
+    <script src="game_player.js" defer></script>
+    <script src="game_scoring.js" defer></script>
+    <script src="game_enemy_collision.js" defer></script>
+    <script src="game.js" defer></script>
+</head>
+<body>
+    <div class="game-frame">
+        <canvas class="canvas"></canvas>
+        <img class="player-ship" src="../images/nave player.png" alt="Nave do jogador">
+        <img class="shot_player" src="../images/shot player.png" alt="Tiro do jogador">
+        <div class="score-board">SCORE: <span class="score-value">0</span></div>
+    </div>
+
+</body>
+</html>
