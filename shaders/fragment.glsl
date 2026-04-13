@@ -2,9 +2,10 @@
 
 precision highp float;
 
+in vec2 v_uv;
+uniform sampler2D u_texture;
 out vec4 outColor;
-uniform vec3 color;
 
 void main() {
-    outColor = vec4(color, 1.0);
+    outColor = texture(u_texture, v_uv);
 }

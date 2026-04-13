@@ -15,14 +15,16 @@
     <script src="game_player.js" defer></script>
     <script src="game_scoring.js" defer></script>
     <script src="game_enemy_collision.js" defer></script>
+    <script src="game_background.js" defer></script>
     <script src="game.js" defer></script>
 </head>
 <body>
     <div class="game-frame">
+        <div class="starfield" aria-hidden="true"></div>
         <canvas class="canvas"></canvas>
         <img class="player-ship" src="../images/nave player.png" alt="Nave do jogador">
         <img class="shot_player" src="../images/shot player.png" alt="Tiro do jogador">
-        <div class="score-board">SCORE: <span class="score-value">0</span></div>
+        <div class="score-board">PONTOS: <span class="score-value">0</span></div>
     </div>
 
 </body>

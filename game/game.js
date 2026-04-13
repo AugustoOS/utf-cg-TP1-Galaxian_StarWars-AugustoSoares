@@ -1,6 +1,10 @@
 window.Game = window.Game ? window.Game : {};
 
 Game.updateEnemyFormation = function updateEnemyFormation(currentTime) {
+	if (Game.state.gameOver) {
+		return;
+	}
+
 	const enemyMovement = Game.state.enemyMovement;
 	if (enemyMovement.lastTime === 0) {
 		enemyMovement.lastTime = currentTime;
@@ -23,10 +27,16 @@ Game.updateEnemyFormation = function updateEnemyFormation(currentTime) {
 	}
 
 	Game.layoutEnemies();
+	Game.updateEnemyDive(currentTime, deltaTime);
+	Game.checkEnemyPlayerCollision();
 	window.requestAnimationFrame(Game.updateEnemyFormation);
 };
 
 Game.updatePlayerShot = function updatePlayerShot(currentTime) {
+	if (Game.state.gameOver) {
+		return;
+	}
+
 	const shotState = Game.state.shot;
 	if (!shotState.active) {
 		shotState.lastTime = 0;
@@ -88,10 +98,19 @@ window.addEventListener('resize', () => {
 	const movementLimit = Game.getHorizontalMovementLimit();
 	Game.state.enemyMovement.offsetX = Math.min(Math.max(Game.state.enemyMovement.offsetX, -movementLimit), movementLimit);
 	Game.layoutEnemies();
+	Game.initializeBackgroundStarfield();
+});
+
+window.addEventListener('visibilitychange', () => {
+	if (!document.hidden) {
+		Game.resetBackgroundTiming();
+	}
 });
 
 Game.createEnemyFormation();
+Game.initializeBackgroundStarfield();
 Game.clampPlayerPosition();
 window.requestAnimationFrame(Game.updatePlayerPosition);
 window.requestAnimationFrame(Game.updatePlayerShot);
 window.requestAnimationFrame(Game.updateEnemyFormation);
+window.requestAnimationFrame(Game.updateBackgroundStarfield);

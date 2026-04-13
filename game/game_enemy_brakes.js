@@ -16,20 +16,23 @@ Game.maybeTriggerDefensiveBrake = function maybeTriggerDefensiveBrake(previousSh
 		return;
 	}
 
-	const rowTop = Math.min(...frontRowEnemies.map((enemy) => enemy.offsetTop));
-	const rowBottom = Math.max(...frontRowEnemies.map((enemy) => enemy.offsetTop + enemy.offsetHeight));
+	const frontRowRects = frontRowEnemies.map((enemy) => Game.getEnemyTightRect(enemy));
+	const rowTop = Math.min(...frontRowRects.map((enemyRect) => enemyRect.top));
+	const rowBottom = Math.max(...frontRowRects.map((enemyRect) => enemyRect.bottom));
 	const rowMidY = rowTop + ((rowBottom - rowTop) / 2);
-	const crossedFrontRowMid = previousShotY > rowMidY && shotState.y <= rowMidY;
+	const shotBounds = Game.computeImageTightBounds(Game.refs.shot);
+	const shotHeight = Game.refs.shot.offsetHeight;
+	const previousShotTop = previousShotY + (shotBounds.fracY * shotHeight);
+	const currentShotTop = Game.getShotTightRect().top;
+	const crossedFrontRowMid = previousShotTop > rowMidY && currentShotTop <= rowMidY;
 	if (!crossedFrontRowMid) {
 		return;
 	}
 
-	const halfShotWidth = Game.refs.shot.offsetWidth / 2;
-	const shotLeft = shotState.x - halfShotWidth;
-	const shotRight = shotState.x + halfShotWidth;
-	const collidesWithFrontRow = frontRowEnemies.some((enemy) => (
-		shotLeft < enemy.offsetLeft + enemy.offsetWidth
-		&& shotRight > enemy.offsetLeft
+	const shotRect = Game.getShotTightRect();
+	const collidesWithFrontRow = frontRowRects.some((enemyRect) => (
+		shotRect.left < enemyRect.right
+		&& shotRect.right > enemyRect.left
 	));
 
 	if (!collidesWithFrontRow) {
@@ -50,8 +53,8 @@ Game.maybeReleaseDefensiveBrake = function maybeReleaseDefensiveBrake() {
 		return;
 	}
 
-	const backRowTop = Math.min(...backRowEnemies.map((enemy) => enemy.offsetTop));
-	const shotBottom = shotState.y + Game.refs.shot.offsetHeight;
+	const backRowTop = Math.min(...backRowEnemies.map((enemy) => Game.getEnemyTightRect(enemy).top));
+	const shotBottom = Game.getShotTightRect().bottom;
 	if (shotBottom < backRowTop) {
 		Game.setFleetBrakeActive(false);
 	}

@@ -9,7 +9,8 @@ Game.getHorizontalMovementLimit = function getHorizontalMovementLimit() {
 };
 
 Game.clampPlayerPosition = function clampPlayerPosition() {
-	const halfShipWidth = Game.refs.playerShip.offsetWidth / 2;
+	const scale = Game.playerRenderConfig ? Game.playerRenderConfig.playerScale : 1;
+	const halfShipWidth = (Game.refs.playerShip.offsetWidth * scale) / 2;
 	const minX = halfShipWidth;
 	const maxX = Game.refs.gameFrame.clientWidth - halfShipWidth;
 
