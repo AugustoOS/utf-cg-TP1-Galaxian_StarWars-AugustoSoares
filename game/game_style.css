@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 html, body {
 	width: 100%;
 	height: 100%;
@@ -12,14 +14,55 @@ body {
 	background: #000002;
 }
 
+@keyframes gameFadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes gameDarken {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
 .game-frame {
 	position: relative;
 	width: min(100vw, calc(100vh * 4 / 3));
 	height: min(100vh, calc(100vw * 3 / 4));
 	aspect-ratio: 4 / 3;
 	overflow: hidden;
-	background: #000002;
+	opacity: 0;
+	animation: gameFadeIn 0.7s ease-out forwards;
+	background:
+		repeating-linear-gradient(
+			180deg,
+			rgba(255, 255, 255, 0.05) 0px,
+			rgba(255, 255, 255, 0.05) 1px,
+			transparent 1px,
+			transparent 4px
+		),
+		#000002;
 	border: 2px solid #020206;
+}
+
+.screen-transition-game {
+	position: fixed;
+	inset: 0;
+	background: #000;
+	z-index: 2000;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.screen-transition-game--active {
+	animation: gameDarken 1s ease forwards;
 }
 
 .starfield {
@@ -27,16 +70,42 @@ body {
 	inset: 0;
 	overflow: hidden;
 	pointer-events: none;
-	z-index: 0;
-	background:
-		repeating-linear-gradient(
-			180deg,
-			rgba(255, 255, 255, 0.04) 0px,
-			rgba(255, 255, 255, 0.04) 1px,
-			transparent 1px,
-			transparent 4px
-		),
-		#000002;
+	z-index: 2;
+	background: transparent;
+}
+
+
+@keyframes bg-float {
+	0%   { transform: translate(0px, 0px); }
+	25%  { transform: translate(5px, -4px); }
+	50%  { transform: translate(0px, -8px); }
+	75%  { transform: translate(-5px, -4px); }
+	100% { transform: translate(0px, 0px); }
+}
+
+.bg-art {
+	position: absolute;
+	pointer-events: none;
+	image-rendering: pixelated;
+	filter: brightness(0.37) contrast(1.05);
+	z-index: 3;
+	animation: bg-float 9s ease-in-out infinite;
+}
+
+.bg-deathstar {
+	width: clamp(360px, 84vmin, 780px);
+	height: auto;
+	top: -12%;
+	right: -20%;
+	animation-delay: 0s;
+}
+
+.bg-star-destroyer {
+	width: clamp(200px, 54vmin, 410px);
+	height: auto;
+	bottom: 10%;
+	left: -18%;
+	animation-delay: -4.5s;
 }
 
 .star {
@@ -56,7 +125,8 @@ body {
 	width: 100%;
 	height: 100%;
 	pointer-events: none;
-	z-index: 2;
+	z-index: 5;
+	background: transparent;
 }
 
 .player-ship {
@@ -64,45 +134,292 @@ body {
 	left: 50%;
 	bottom: 24px;
 	transform: translateX(-50%);
-	width: clamp(20px, 6%, 56px);
+	width: clamp(16px, 5vmin, 48px);
 	height: auto;
 	pointer-events: none;
 	image-rendering: pixelated;
-	z-index: 1;
+	z-index: 5;
 }
 
 .shot_player {
 	position: absolute;
 	left: 0;
 	top: 0;
-	transform: translateX(-50%);
 	width: clamp(8px, 1.6%, 14px);
 	height: auto;
 	display: none;
 	pointer-events: none;
 	image-rendering: pixelated;
-	z-index: 1;
+	z-index: 5;
+}
+
+
+.shot_enemy {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 32px;
+	height: auto;
+	object-fit: contain;
+	display: none;
+	pointer-events: none;
+	image-rendering: pixelated;
+	z-index: 4;
 }
 
 .enemy-ship {
 	position: absolute;
-	width: clamp(24px, 6%, 48px);
+	width: clamp(30px, 5vmin, 60px);
 	height: auto;
 	pointer-events: none;
 	image-rendering: pixelated;
-	z-index: 1;
+	z-index: 4;
 }
+
 
 .score-board {
 	position: absolute;
-	top: 10px;
-	left: 12px;
+	top: clamp(20px, 0.8vmin, 40px);
+	left: clamp(20px, 0.8vmin, 40px);
 	color: #fff;
 	font-family: 'Lucida Console', Monaco, monospace;
-	font-size: 18px;
+	font-size: clamp(10px, 2.5vmin, 22px);
 	font-weight: 700;
 	letter-spacing: 1px;
 	text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.95);
-	z-index: 3;
+	z-index: 6;
 	user-select: none;
+}
+
+
+.lives-board {
+	position: absolute;
+	top: clamp(3px, 0.8vmin, 8px);
+	right: clamp(3px, 0.8vmin, 8px);
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: clamp(3px, 0.8vmin, 8px);
+	min-width: calc(clamp(42px, 9.6vmin, 90px) * 3 + clamp(3px, 0.8vmin, 8px) * 2);
+	z-index: 6;
+	user-select: none;
+}
+
+.life-icon {
+	width: clamp(42px, 9.6vmin, 90px);
+	height: auto;
+	image-rendering: pixelated;
+	display: block;
+	margin: -5%;
+}
+
+.life-count {
+	color: #fff;
+	font-family: 'Press Start 2P', 'Lucida Console', monospace;
+	font-size: clamp(8px, 2vmin, 18px);
+	font-weight: 700;
+	text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.95);
+	line-height: 1;
+}
+
+
+.game-over-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 2, 0.82);
+	z-index: 10;
+	opacity: 0;
+	transition: opacity 0.35s ease;
+	pointer-events: none;
+}
+
+.game-over-overlay--visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.game-over-box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: clamp(12px, 2.8vmin, 26px);
+	padding: clamp(24px, 5vmin, 52px) clamp(30px, 7vmin, 72px);
+	background: #08021a;
+	border: 2px solid #FFFB00;
+	border-radius: 10px;
+	box-shadow:
+		0 0 32px rgba(255, 251, 0, 0.12),
+		0 0 80px rgba(0, 0, 0, 0.7),
+		inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.game-over-title {
+	margin: 0;
+	color: #FFFB00;
+	font-family: 'Press Start 2P', monospace;
+	font-size: clamp(14px, 4vmin, 38px);
+	letter-spacing: 3px;
+	text-shadow:
+		0 0 14px rgba(255, 251, 0, 0.55),
+		2px 2px 0 rgba(0, 0, 0, 0.95);
+}
+
+.game-over-score {
+	margin: 0;
+	color: #ac00b1;
+	font-family: 'Press Start 2P', monospace;
+	font-size: clamp(8px, 1.8vmin, 16px);
+	letter-spacing: 2px;
+}
+
+.game-over-score-value {
+	color: #fff;
+}
+
+.game-over-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(10px, 1.8vmin, 18px);
+	margin-top: clamp(6px, 1vmin, 12px);
+	width: 100%;
+}
+
+.game-over-btn--primary {
+	padding: clamp(8px, 1.2vmin, 14px) clamp(16px, 2.5vmin, 28px);
+	font-size: clamp(7px, 1.4vmin, 13px);
+	color: #070217;
+	background: #FFFB00;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: 'Press Start 2P', monospace;
+	letter-spacing: 1px;
+	transition: background 0.2s ease, transform 0.1s ease;
+	text-align: center;
+}
+
+.game-over-btn--primary:hover,
+.game-over-btn--primary:focus {
+	background: #ffe600;
+	transform: scale(1.04);
+	outline: none;
+}
+
+.game-over-btn--secondary {
+	padding: clamp(8px, 1.2vmin, 14px) clamp(16px, 2.5vmin, 28px);
+	font-size: clamp(7px, 1.4vmin, 13px);
+	color: #FFFB00;
+	background: transparent;
+	border: 2px solid #FFFB00;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: 'Press Start 2P', monospace;
+	letter-spacing: 1px;
+	transition: background 0.2s ease, transform 0.1s ease;
+	text-align: center;
+}
+
+.game-over-btn--secondary:hover,
+.game-over-btn--secondary:focus {
+	background: rgba(255, 251, 0, 0.1);
+	transform: scale(1.04);
+	outline: none;
+}
+
+
+.pause-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 2, 0.82);
+	z-index: 10;
+	opacity: 0;
+	transition: opacity 0.35s ease;
+	pointer-events: none;
+}
+
+.pause-overlay--visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.pause-box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: clamp(12px, 2.8vmin, 26px);
+	padding: clamp(24px, 5vmin, 52px) clamp(30px, 7vmin, 72px);
+	background: #08021a;
+	border: 2px solid #FFFB00;
+	border-radius: 10px;
+	box-shadow:
+		0 0 32px rgba(255, 251, 0, 0.12),
+		0 0 80px rgba(0, 0, 0, 0.7),
+		inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.pause-title {
+	margin: 0;
+	color: #FFFB00;
+	font-family: 'Press Start 2P', monospace;
+	font-size: clamp(14px, 4vmin, 38px);
+	letter-spacing: 3px;
+	text-shadow:
+		0 0 14px rgba(255, 251, 0, 0.55),
+		2px 2px 0 rgba(0, 0, 0, 0.95);
+}
+
+.pause-buttons {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(10px, 1.8vmin, 18px);
+	margin-top: clamp(6px, 1vmin, 12px);
+	width: 100%;
+}
+
+.pause-btn--primary {
+	padding: clamp(8px, 1.2vmin, 14px) clamp(16px, 2.5vmin, 28px);
+	font-size: clamp(7px, 1.4vmin, 13px);
+	color: #070217;
+	background: #FFFB00;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: 'Press Start 2P', monospace;
+	letter-spacing: 1px;
+	transition: background 0.2s ease, transform 0.1s ease;
+	text-align: center;
+}
+
+.pause-btn--primary:hover,
+.pause-btn--primary:focus {
+	background: #ffe600;
+	transform: scale(1.04);
+	outline: none;
+}
+
+.pause-btn--secondary {
+	padding: clamp(8px, 1.2vmin, 14px) clamp(16px, 2.5vmin, 28px);
+	font-size: clamp(7px, 1.4vmin, 13px);
+	color: #FFFB00;
+	background: transparent;
+	border: 2px solid #FFFB00;
+	border-radius: 8px;
+	cursor: pointer;
+	font-family: 'Press Start 2P', monospace;
+	letter-spacing: 1px;
+	transition: background 0.2s ease, transform 0.1s ease;
+	text-align: center;
+}
+
+.pause-btn--secondary:hover,
+.pause-btn--secondary:focus {
+	background: rgba(255, 251, 0, 0.1);
+	transform: scale(1.04);
+	outline: none;
 }

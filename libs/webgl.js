@@ -1,6 +1,6 @@
-window.GLPanel = window.GLPanel ? window.GLPanel : {};
+﻿window.GLPanel = window.GLPanel ? window.GLPanel : {};
 
-GLPanel.state = { // Cria (ou recria) um objeto chamado "state" dentro de "GLPanel" para armazenar o estado atual do painel WebGL.
+GLPanel.state = {
     canvas: null,
     gl: null,
     program: null,
@@ -77,6 +77,7 @@ GLPanel.resize = function resize() {
 
 GLPanel.init = async function init(canvasElement, options) {
     if (GLPanel.state.gl) {
+        // Evita reinicializar contexto e listeners de resize.
         return GLPanel.state.gl;
     }
 
@@ -170,7 +171,7 @@ GLPanel.init = async function init(canvasElement, options) {
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); //desinverte a textura para alinhar com as coordenadas de tela
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.clearColor(0, 0, 0, 0);
 
     GLPanel.resize();

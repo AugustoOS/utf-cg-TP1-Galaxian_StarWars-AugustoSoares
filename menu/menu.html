@@ -9,16 +9,71 @@
     <script src="menu.js" defer></script>
 </head>
 <body>
+    <div class="launch-sequence" aria-hidden="true">
+        <img src="../images/star destroyer.png" alt="" class="launch-destroyer">
+        <img src="../images/nave player.png" alt="" class="launch-player">
+    </div>
+
     <div class="menu-container">
         <div class="icon-row">
             <img src="../images/Galaxian_icon.png" alt="Galaxian Icon" class="galaxian-logo">
             <img src="../images/StarWars_icon.png" alt="Star Wars Icon" class="starwars-logo">
             <span class="icon-version">version</span>
         </div>
-        <button class="but-start">
-            <div>Jogar</div>
-        </button>
+        <div class="menu-buttons" id="menu-main">
+            <button class="but-start" id="play-btn">
+                <div>Jogar</div>
+            </button>
+            <button class="but-instructions" id="instructions-btn">
+                <div>Instruções</div>
+            </button>
+        </div>
+
+        <div class="menu-buttons menu-mode hidden" id="menu-mode">
+            <button class="but-back" id="back-btn">← Voltar</button>
+            <button class="but-start" id="arcade-btn">
+                <div>Arcade</div>
+            </button>
+            <button class="but-campain" id="campain-btn">
+                <div>Campanha </div>
+                <div id="construction">(Em construção)</div>
+            </button>
+        </div>
     </div>
+
+    <!-- Painel de Instruções -->
+    <div class="instructions-overlay" id="instructions-overlay">
+        <div class="instructions-panel">
+            <button class="close-btn" id="close-instructions">✕</button>
+
+            <h2 class="instructions-title">Como Jogar</h2>
+
+            <div class="instructions-description">
+                <p>
+                    Derrote todas as naves inimigas antes que elas alcancem você. Cuidado com as formações de ataque — algumas naves mergulham em sua direção!
+                </p>
+            </div>
+
+            <div class="keys-section">
+                <h3 class="keys-title">Controles</h3>
+                <div class="keys-grid">
+                    <div class="key-item">
+                        <img src="../images/left.png" alt="Seta Esquerda" class="key-img">
+                        <span class="key-label">Mover<br>Esquerda</span>
+                    </div>
+                    <div class="key-item">
+                        <img src="../images/right.png" alt="Seta Direita" class="key-img">
+                        <span class="key-label">Mover<br>Direita</span>
+                    </div>
+                    <div class="key-item">
+                        <img src="../images/space_type.png" alt="Espaço" class="key-img key-space">
+                        <span class="key-label">Atirar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <button id="mute-btn">
         <img id="mute-icon" src="../images/mute.png" alt="Mute">
     </button>

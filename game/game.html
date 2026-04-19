@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="AugustoOS">
     <title>Galaxian</title>
+
     <link rel="stylesheet" href="game_style.css">
     <script src="../libs/math.js" defer></script>
     <script src="../libs/webgl.js" defer></script>
@@ -21,11 +22,15 @@
 <body>
     <div class="game-frame">
         <div class="starfield" aria-hidden="true"></div>
+        <img class="bg-art bg-deathstar" src="../images/deathstar.png">
+        <img class="bg-art bg-star-destroyer" src="../images/star destroyer.png">
         <canvas class="canvas"></canvas>
-        <img class="player-ship" src="../images/nave player.png" alt="Nave do jogador">
-        <img class="shot_player" src="../images/shot player.png" alt="Tiro do jogador">
+        <img class="player-ship" src="../images/nave player.png">
+        <img class="shot_player" src="../images/shot player.png">
+        <img class="shot_enemy" src="../images/shot enemy.png">
+        <img class="life-icon" src="../images/life point.png">
         <div class="score-board">PONTOS: <span class="score-value">0</span></div>
+        <div class="lives-board"></div>
     </div>
-
 </body>
 </html>

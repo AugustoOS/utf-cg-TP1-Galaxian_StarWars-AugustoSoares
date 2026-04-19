@@ -1,9 +1,15 @@
 window.Game = window.Game ? window.Game : {};
 
+// Reinicia o timer do starfield — necessário quando o jogo pausa ou retoma,
+// pra evitar que o deltaTime acumule e as estrelas saltem muito no próximo frame.
 Game.resetBackgroundTiming = function resetBackgroundTiming() {
 	Game.state.background.lastTime = 0;
 };
 
+// Cria todas as estrelas do fundo do jogo e popula o estado `Game.state.background.stars`.
+// As estrelas são divididas em 3 camadas com tamanhos, velocidades e chances de streak diferentes,
+// dando profundidade ao campo estelar. Cada estrela vira um <span> com posição e opacidade aleatória.
+// Deve ser chamada ao iniciar e ao redimensionar a janela.
 Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 	const container = Game.refs.starfield;
 	if (!container) {
@@ -36,9 +42,11 @@ Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 			const speed = config.minSpeed + (Math.random() * (config.maxSpeed - config.minSpeed));
 			const twinkleSpeed = config.minTwinkle + (Math.random() * (config.maxTwinkle - config.minTwinkle));
 			const twinklePhase = Math.random() * Math.PI * 2;
+
 			const isStreak = Math.random() < config.streakChance;
 			const starHeight = isStreak ? size + (Math.random() < 0.5 ? 1 : 2) : size;
 			const baseOpacity = 0.55 + (Math.random() * 0.4);
+
 			const color = Math.random() < 0.2 ? '#a8c0ff' : '#ffffff';
 
 			star.style.setProperty('--star-w', `${size}px`);
@@ -64,8 +72,19 @@ Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 	Game.state.background.lastTime = 0;
 };
 
+// Loop de animação do starfield — roda a cada frame via requestAnimationFrame.
+// Move cada estrela pra baixo de acordo com sua velocidade e o deltaTime.
+// Quando uma estrela sai pelo fundo, reaparece no topo em posição X aleatória.
+// Aplica um efeito de cintilação (twinkle) usando uma onda senoidal no tempo.
+// Fica pausado automaticamente enquanto `Game.state.paused` for verdadeiro.
 Game.updateBackgroundStarfield = function updateBackgroundStarfield(currentTime) {
 	if (Game.state.gameOver) {
+		return;
+	}
+
+	if (Game.state.paused) {
+		Game.state.background.lastTime = 0;
+		window.requestAnimationFrame(Game.updateBackgroundStarfield);
 		return;
 	}
 
@@ -94,6 +113,7 @@ Game.updateBackgroundStarfield = function updateBackgroundStarfield(currentTime)
 
 	for (let i = 0; i < stars.length; i += 1) {
 		const star = stars[i];
+		
 		star.y += star.speed * deltaTime;
 
 		if (star.y > height + 5) {
