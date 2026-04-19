@@ -9,7 +9,7 @@
     <script src="menu.js" defer></script>
 </head>
 <body>
-    <div class="launch-sequence" aria-hidden="true">
+    <div class="launch-sequence" aria-hidden="true" hidden>
         <img src="../images/star destroyer.png" alt="" class="launch-destroyer">
         <img src="../images/nave player.png" alt="" class="launch-player">
     </div>
@@ -29,7 +29,7 @@
             </button>
         </div>
 
-        <div class="menu-buttons menu-mode hidden" id="menu-mode">
+        <div class="menu-buttons menu-mode hidden" id="menu-mode" hidden>
             <button class="but-back" id="back-btn">← Voltar</button>
             <button class="but-start" id="arcade-btn">
                 <div>Arcade</div>
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Painel de Instruções -->
-    <div class="instructions-overlay" id="instructions-overlay">
+    <div class="instructions-overlay" id="instructions-overlay" hidden>
         <div class="instructions-panel">
             <button class="close-btn" id="close-instructions">✕</button>
 

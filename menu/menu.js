@@ -79,15 +79,20 @@
     const backBtn = document.getElementById('back-btn');
     const arcadeBtn = document.getElementById('arcade-btn');
     const campainBtn = document.getElementById('campain-btn');
+    const launchSequence = document.querySelector('.launch-sequence');
 
     playBtn.addEventListener('click', () => {
         menuMain.classList.add('hidden');
+        menuMain.hidden = true;
         menuMode.classList.remove('hidden');
+        menuMode.hidden = false;
     });
 
     backBtn.addEventListener('click', () => {
         menuMode.classList.add('hidden');
+        menuMode.hidden = true;
         menuMain.classList.remove('hidden');
+        menuMain.hidden = false;
     });
 
     arcadeBtn.addEventListener('click', () => {
@@ -101,6 +106,9 @@
         document.body.style.setProperty('--launch-duration', `${launchDurationMs}ms`);
         document.body.style.setProperty('--launch-player-delay', `${playerDelayMs}ms`);
         document.body.style.setProperty('--launch-player-duration', `${playerRunMs}ms`);
+        if (launchSequence) {
+            launchSequence.hidden = false;
+        }
         document.body.classList.add('arcade-launching');
         screenTransition.classList.remove('active');
         const goToGame = () => {
@@ -132,6 +140,9 @@
                 launchFadeTimeoutId = null;
             }
             document.body.classList.remove('arcade-launching');
+            if (launchSequence) {
+                launchSequence.hidden = true;
+            }
             screenTransition.classList.remove('active');
         });
         fadeOutAudio(audio, TRANSITION_DURATION_MS);
@@ -146,11 +157,13 @@
     const closeBtn = document.getElementById('close-instructions');
 
     const openInstructions = () => {
+        instructionsOverlay.hidden = false;
         instructionsOverlay.classList.add('active');
     };
 
     const closeInstructions = () => {
         instructionsOverlay.classList.remove('active');
+        instructionsOverlay.hidden = true;
     };
 
     instructionsBtn.addEventListener('click', openInstructions);
