@@ -1,6 +1,6 @@
 ﻿window.addEventListener('load', () => {
     const TRANSITION_DURATION_MS = 1000;
-    let isArcadeTransitioning = true;
+    let isArcadeTransitioning = false;
 
     // Overlay unico para fade entre telas.
     const screenTransition = document.createElement('div');
