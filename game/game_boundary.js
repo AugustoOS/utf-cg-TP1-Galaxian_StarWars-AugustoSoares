@@ -1,19 +1,16 @@
 window.Game = window.Game ? Game : {};
 
-// Retorna o bounding rect do gameFrame em coordenadas de tela.
-// Útil pra calcular posições relativas ao frame durante eventos de input.
+// retorna o bounding rect do frame — usado pra calcular posicoes relativas em eventos de input
 Game.getGameBounds = function getGameBounds() {
     return Game.refs.gameFrame.getBoundingClientRect();
 };
 
-// Calcula quanto a formação de inimigos pode se mover pra esquerda e pra direita
-// sem que qualquer inimigo vivo saia da área do jogo.
-// Analisa cada linha separadamente e pega o menor espaço livre em cada direção
-// (o "gargalo" que limita o quanto toda a formação pode se deslocar).
+// calcula quanto o grid pode se mover pra cada lado sem inimigo sair da tela e analisa cada fileira separadamente e usa o menor espaco livre como limite
 Game.getHorizontalMovementLimits = function getHorizontalMovementLimits() {
     const formationEnemies = Game.getFormationEnemies ? Game.getFormationEnemies() : Game.state.enemies;
 
     if (!formationEnemies || formationEnemies.length === 0) {
+        // fallback: centraliza pelo maxRowWidth quando nao tem inimigos no grid
         const fallback = Math.max((Game.refs.gameFrame.clientWidth - Game.state.enemyMovement.maxRowWidth) / 2, 0);
         return { left: fallback, right: fallback };
     }
@@ -23,6 +20,7 @@ Game.getHorizontalMovementLimits = function getHorizontalMovementLimits() {
     const gapX = Game.scale(15);
     const columnSpacing = enemyWidth + gapX;
 
+    // agrupa inimigos por fileira e rastreia a coluna mais a esquerda e mais a direita de cada uma
     const rowMap = {};
     formationEnemies.forEach((enemy) => {
         const row = Number(enemy.dataset.row);
@@ -40,6 +38,7 @@ Game.getHorizontalMovementLimits = function getHorizontalMovementLimits() {
     let minAllowedFromLeft = Infinity;
     let minAllowedFromRight = Infinity;
 
+    // pra cada fileira, calcula o espaco livre entre a borda da tela e o inimigo mais extremo
     Object.values(rowMap).forEach((row) => {
         const originalCount = row.count;
         const originalRowWidth = (originalCount * enemyWidth) + ((originalCount - 1) * gapX);
@@ -61,16 +60,13 @@ Game.getHorizontalMovementLimits = function getHorizontalMovementLimits() {
     };
 };
 
-// Versão simplificada de getHorizontalMovementLimits: retorna um único valor
-// que é o menor dos dois lados, garantindo que nenhuma borda seja ultrapassada.
+// versao simplificada que retorna o menor dos dois lados — util quando so precisa de um valor simetrico
 Game.getHorizontalMovementLimit = function getHorizontalMovementLimit() {
     const limits = Game.getHorizontalMovementLimits();
     return Math.max(Math.min(limits.left, limits.right), 0);
 };
 
-// Impõe os limites horizontais ao jogador: garante que a nave nunca saia
-// pelas bordas do gameFrame, levando em conta a largura escalada da nave.
-// Atualiza também o atributo `left` no CSS pra refletir a posição final.
+// impede a nave de sair pelas bordas — leva em conta a escala do sprite pra nao cortar a asa
 Game.clampPlayerPosition = function clampPlayerPosition() {
     const scale = Game.playerRenderConfig ? Game.playerRenderConfig.playerScale : 1;
     const halfShipWidth = (Game.refs.playerShip.offsetWidth * scale) / 2;

@@ -1,15 +1,11 @@
 window.Game = window.Game ? window.Game : {};
 
-// Reinicia o timer do starfield — necessário quando o jogo pausa ou retoma,
-// pra evitar que o deltaTime acumule e as estrelas saltem muito no próximo frame.
+// reseta o timer do starfield pra nao acumular deltaTime durante pause
 Game.resetBackgroundTiming = function resetBackgroundTiming() {
 	Game.state.background.lastTime = 0;
 };
 
-// Cria todas as estrelas do fundo do jogo e popula o estado `Game.state.background.stars`.
-// As estrelas são divididas em 3 camadas com tamanhos, velocidades e chances de streak diferentes,
-// dando profundidade ao campo estelar. Cada estrela vira um <span> com posição e opacidade aleatória.
-// Deve ser chamada ao iniciar e ao redimensionar a janela.
+// cria todas as estrelas e joga no DOM — 3 camadas com tamanho/velocidade diferente pra dar profundidade
 Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 	const container = Game.refs.starfield;
 	if (!container) {
@@ -25,6 +21,7 @@ Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 		return;
 	}
 
+	// streakChance define a chance da estrela ser um tracinho alongado em vez de ponto
 	const layerConfigs = [
 		{ count: 24, minSize: 1, maxSize: 2, minSpeed: 210, maxSpeed: 210, minTwinkle: 2.8, maxTwinkle: 4.2, streakChance: 0.05 },
 		{ count: 14, minSize: 1, maxSize: 2, minSpeed: 210, maxSpeed: 210, minTwinkle: 3.2, maxTwinkle: 5.0, streakChance: 0.2 },
@@ -47,6 +44,7 @@ Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 			const starHeight = isStreak ? size + (Math.random() < 0.5 ? 1 : 2) : size;
 			const baseOpacity = 0.55 + (Math.random() * 0.4);
 
+			// 20% de chance de ser azulada, o resto branco
 			const color = Math.random() < 0.2 ? '#a8c0ff' : '#ffffff';
 
 			star.style.setProperty('--star-w', `${size}px`);
@@ -72,11 +70,7 @@ Game.initializeBackgroundStarfield = function initializeBackgroundStarfield() {
 	Game.state.background.lastTime = 0;
 };
 
-// Loop de animação do starfield — roda a cada frame via requestAnimationFrame.
-// Move cada estrela pra baixo de acordo com sua velocidade e o deltaTime.
-// Quando uma estrela sai pelo fundo, reaparece no topo em posição X aleatória.
-// Aplica um efeito de cintilação (twinkle) usando uma onda senoidal no tempo.
-// Fica pausado automaticamente enquanto `Game.state.paused` for verdadeiro.
+// loop do starfield — move estrelas pra baixo, recicla no topo e aplica cintilacao senoidal
 Game.updateBackgroundStarfield = function updateBackgroundStarfield(currentTime) {
 	if (Game.state.gameOver) {
 		return;
@@ -116,11 +110,13 @@ Game.updateBackgroundStarfield = function updateBackgroundStarfield(currentTime)
 		
 		star.y += star.speed * deltaTime;
 
+		// quando sai pelo fundo, reaparece no topo em x aleatorio
 		if (star.y > height + 5) {
 			star.y = -5;
 			star.x = Math.random() * width;
 		}
 
+		// cintilacao: onda senoidal vira 3 niveis de brilho pra evitar calculo continuo
 		const wave = Math.sin((elapsed * star.twinkleSpeed) + star.twinklePhase);
 		const twinkle = wave > 0.65 ? 1 : (wave < -0.3 ? 0.45 : 0.75);
 		const opacity = Math.max(0.1, Math.min(1, star.baseOpacity * twinkle));

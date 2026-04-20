@@ -1,7 +1,7 @@
 ﻿window.Game = window.Game ? window.Game : {};
 
 Game.playerRenderConfig = {
-	get bottomOffset() { return Game.scale(8); },
+	get bottomOffset() { return Game.scale(8); }, // distancia da nave ate a borda inferior, em pixels virtuais
 	playerScale: 1.2,
 	shotScale: 1.25,
 	webgl: {
@@ -30,10 +30,12 @@ Game.playPlayerShotAudio = function playPlayerShotAudio() {
 		return;
 	}
 
+	// reseta o currentTime pra poder disparar rapido sem esperar o audio terminar
 	Game.playerAudio.shot.currentTime = 0;
-	Game.playerAudio.shot.play().catch(() => {});
+	Game.playerAudio.shot.play().catch(() => {}); // catch silencioso: browser pode bloquear autoplay
 };
 
+// fallback pra quando o elemento ainda nao tem tamanho no DOM (ex: imagem nao carregou)
 Game.measureSprite = function measureSprite(element, fallbackWidth, fallbackHeight) {
 	return {
 		width: element.offsetWidth || fallbackWidth,
@@ -48,8 +50,8 @@ Game.getPlayerRenderBox = function getPlayerRenderBox() {
 	const scaledHeight = shipMetrics.height * Game.playerRenderConfig.playerScale;
 
 	return {
-		x: Game.state.movement.x - (scaledWidth / 2),
-		y: frameHeight - Game.playerRenderConfig.bottomOffset - scaledHeight,
+		x: Game.state.movement.x - (scaledWidth / 2), // centraliza no x do jogador
+		y: frameHeight - Game.playerRenderConfig.bottomOffset - scaledHeight, // ancora na borda inferior
 		width: scaledWidth,
 		height: scaledHeight,
 	};
@@ -93,7 +95,7 @@ Game.startPlayerRenderLoop = function startPlayerRenderLoop() {
 	Game.state.render.renderLoopActive = true;
 
 	const renderStep = function renderStep() {
-		// Render separado da fisica para manter o desenho estavel.
+		// loop de render separado da fisica pra manter o desenho estavel independente do gameplay
 		Game.renderPlayerLayer();
 		window.requestAnimationFrame(renderStep);
 	};
@@ -112,6 +114,7 @@ Game.initializePlayerWebGL = async function initializePlayerWebGL() {
 	}
 
 	try {
+		// carrega as duas texturas em paralelo
 		const textures = await Promise.all([
 			GLPanel.loadTextureFromUrl(Game.refs.playerShip.src),
 			GLPanel.loadTextureFromUrl(Game.refs.playerShot.src),
@@ -121,6 +124,7 @@ Game.initializePlayerWebGL = async function initializePlayerWebGL() {
 		Game.state.render.shotTexture = textures[1];
 		Game.state.render.ready = true;
 
+		// esconde os elementos HTML pois agora o WebGL desenha por cima no canvas
 		Game.refs.playerShip.style.visibility = 'hidden';
 		Game.refs.playerShot.style.visibility = 'hidden';
 
@@ -146,7 +150,7 @@ Game.hidePlayerShot = function hidePlayerShot() {
 
 Game.spawnPlayerShot = function spawnPlayerShot() {
 	if (Game.state.playerShot.active) {
-		return;
+		return; // so um tiro na tela por vez
 	}
 
 	const playerBox = Game.getPlayerRenderBox();
@@ -155,9 +159,9 @@ Game.spawnPlayerShot = function spawnPlayerShot() {
 
 	Game.state.playerShot.active = true;
 	Game.state.playerShot.lastTime = 0;
-	Game.state.playerShot.brakesAlreadyTriggered = false;
-	Game.state.playerShot.x = playerBox.x + (playerBox.width / 2);
-	Game.state.playerShot.y = playerBox.y - shotHeight;
+	Game.state.playerShot.brakesAlreadyTriggered = false; // reseta flag de freada pra esse novo tiro
+	Game.state.playerShot.x = playerBox.x + (playerBox.width / 2); // nasce no centro da nave
+	Game.state.playerShot.y = playerBox.y - shotHeight; // nasce logo acima da nave
 
 	Game.refs.playerShot.style.display = 'block';
 	Game.updatePlayerShotPosition();

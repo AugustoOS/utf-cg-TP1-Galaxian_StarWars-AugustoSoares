@@ -56,7 +56,6 @@ Game.checkTriggerDefensiveBrake = function checkTriggerDefensiveBrake(previousSh
 Game.checkReleaseDefensiveBrake = function checkReleaseDefensiveBrake() {
 	const shotState = Game.state.playerShot;
 
-	// Desativa se nao houver tiro ativo ou se o freio ja nao estiver ligado
 	if (!shotState.active || !shotState.brakesAlreadyTriggered) {
 		return;
 	}

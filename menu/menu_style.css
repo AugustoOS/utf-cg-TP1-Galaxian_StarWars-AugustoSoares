@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+/* sobe o menu de baixo pra cima como se estivesse chegando de fora da tela */
 @keyframes entrance {
     0% {
         transform: translate(-50%, 100vh);
@@ -16,6 +17,7 @@
     100% { opacity: 1; }
 }
 
+/* painel de instrucoes entra com um leve overshoot (scale 0.95 -> 1) */
 @keyframes panelSlideIn {
     0% {
         transform: translateY(40px) scale(0.95);
@@ -27,6 +29,7 @@
     }
 }
 
+/* screenDarken: fade pra preto ao sair. screenReveal: desfaz o preto ao entrar na pagina */
 @keyframes screenDarken {
     0% { opacity: 0; }
     100% { opacity: 1; }
@@ -39,6 +42,7 @@
 
 
 
+/* font-size base no html pra poder usar rem escalavel em todo o menu */
 html {
     font-size: clamp(32px, 2vmin, 48px);
 }
@@ -56,6 +60,7 @@ body {
     position: relative;
 }
 
+/* sequencia de animacao de lancamento — invisivel por padrao, JS ativa adicionando .arcade-launching no body */
 .launch-sequence {
     position: fixed;
     inset: 0;
@@ -130,6 +135,7 @@ body.arcade-launching .launch-sequence {
 }
 
 body.arcade-launching .launch-destroyer {
+    /* duracao e delay vem de CSS vars setadas pelo JS pra sincronizar com o audio */
     animation: launchDestroyerDrift var(--launch-duration, 2.8s) linear forwards;
 }
 
@@ -137,6 +143,7 @@ body.arcade-launching .launch-player {
     animation: launchPlayerRun var(--launch-player-duration, 1.4s) cubic-bezier(0.2, 0.8, 0.2, 1) var(--launch-player-delay, 1.1s) forwards;
 }
 
+/* overlay de transicao — .active escurece, .reveal clareia (usado ao voltar pro menu) */
 .screen-transition {
     position: fixed;
     inset: 0;
@@ -155,6 +162,7 @@ body.arcade-launching .launch-player {
     animation: screenReveal 0.5s ease forwards;
 }
 
+/* estrelas estaticas no fundo via pseudo-elementos — duas camadas com tamanhos diferentes pra dar profundidade */
 body::before,
 body::after {
     content: '';
@@ -199,6 +207,7 @@ body::after {
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* cubic-bezier customizado da aquela desacelerada suave no final da entrada */
     animation: entrance 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     z-index: 1;
 }
@@ -315,6 +324,7 @@ body::after {
     100% { opacity: 1; transform: translateY(0); }
 }
 
+/* troca entre modos do menu (arcade/campanha) com fade rapido pra nao parecer corte seco */
 .menu-mode {
     animation: fadeSwap 0.25s ease forwards;
 }
@@ -364,6 +374,7 @@ body::after {
     justify-content: center;
 }
 
+/* display:none nao anima, entao a classe .active troca pra flex e dispara o fade */
 .instructions-overlay.active {
     display: flex;
     animation: overlayFadeIn 0.25s ease forwards;
@@ -378,6 +389,7 @@ body::after {
     max-width: clamp(300px, 50vmin, 540px);
     width: 90%;
     box-shadow: none;
+    /* cubic-bezier(0.34, 1.56, ...) tem overshoot > 1 — da o efeito de quicar levemente ao abrir */
     animation: panelSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     font-family: 'Press Start 2P', Arial, sans-serif;
 }

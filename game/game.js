@@ -12,6 +12,7 @@ Game.resetGameplayTimings = function resetGameplayTimings() {
 Game.goToMenuWithTransition = function goToMenuWithTransition() {
 	var TRANSITION_DURATION_MS = 1000;
 
+	// evita disparar a transicao duas vezes se o botao for clicado rapido
 	if (Game.state.transitioningToMenu) {
 		return;
 	}
@@ -29,6 +30,7 @@ Game.goToMenuWithTransition = function goToMenuWithTransition() {
 		transition.classList.add('screen-transition-game--active');
 	});
 
+	// guarda flag no sessionStorage pra pagina do menu saber que deve entrar com animacao
 	window.setTimeout(function () {
 		sessionStorage.setItem('menuTransitionIn', '1');
 		window.location.href = '../index.html';
@@ -84,6 +86,7 @@ Game.pauseGame = function pauseGame() {
 	}
 
 	Game.state.paused = true;
+	// zera as teclas pressionadas pra nave nao continuar andando ao despausar
 	Game.state.movement.left = false;
 	Game.state.movement.right = false;
 	Game.setFleetBrakeActive(false);
@@ -116,9 +119,10 @@ Game.updateEnemyFormation = function updateEnemyFormation(currentTime) {
 	const dt = (currentTime - em.lastTime) / 1000;
 	em.lastTime = currentTime;
 
-	const speedMul = em.defensiveBrakeActive ? 0 : 1;
+	const speedMul = em.defensiveBrakeActive ? 0 : 1; // freada defensiva: congela o movimento lateral
 	em.offsetX += em.direction * em.baseSpeed * speedMul * dt;
 
+	// inverte direcao ao tocar o limite de cada lado
 	const lim = Game.getHorizontalMovementLimits();
 	if (em.offsetX <= -lim.left)  { em.offsetX = -lim.left;  em.direction =  1; }
 	if (em.offsetX >=  lim.right) { em.offsetX =  lim.right; em.direction = -1; }
@@ -138,6 +142,7 @@ Game.updatePlayerShot = function updatePlayerShot(currentTime) {
 	}
 
 	const shotState = Game.state.playerShot;
+	// sem tiro ativo: garante que o freio defensivo nao fica preso
 	if (!shotState.active) {
 		shotState.lastTime = 0;
 		Game.setFleetBrakeActive(false);
@@ -155,6 +160,7 @@ Game.updatePlayerShot = function updatePlayerShot(currentTime) {
 	Game.checkTriggerDefensiveBrake(previousShotY);
 	Game.checkReleaseDefensiveBrake();
 
+	// tiro saiu pela parte de cima da tela
 	if (shotState.y + Game.refs.playerShot.offsetHeight < 0) {
 		Game.hidePlayerShot();
 		window.requestAnimationFrame(Game.updatePlayerShot);
@@ -207,6 +213,7 @@ window.addEventListener('keydown', (event) => {
 
 window.addEventListener('resize', () => {
 	Game.clampPlayerPosition();
+	// recalcula os limites e reposiciona o grid pra nao ficar fora da tela apos resize
 	const lim = Game.getHorizontalMovementLimits();
 	Game.state.enemyMovement.offsetX = Math.min(Math.max(Game.state.enemyMovement.offsetX, -lim.left), lim.right);
 	Game.layoutEnemies();
@@ -214,16 +221,19 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('visibilitychange', () => {
+	// pausa automaticamente se o jogador trocar de aba
 	if (document.hidden && !Game.state.gameOver) {
 		Game.pauseGame();
 	}
 	if (!document.hidden) Game.resetBackgroundTiming();
 });
 
+// inicializacao — ordem importa: lives e formacao antes de comecar os loops
 Game.updateLives();
 Game.createEnemyFormation();
 Game.initializeBackgroundStarfield();
 Game.clampPlayerPosition();
+// dispara todos os loops de animacao independentes
 window.requestAnimationFrame(Game.updatePlayerPosition);
 window.requestAnimationFrame(Game.updatePlayerShot);
 window.requestAnimationFrame(Game.updateEnemyFormation);

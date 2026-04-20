@@ -6,6 +6,7 @@ html, body {
 	margin: 0;
 }
 
+/* #000002 em vez de #000000 — preto puro some em alguns monitores, esse garante contraste */
 body {
 	display: flex;
 	align-items: center;
@@ -34,12 +35,15 @@ body {
 
 .game-frame {
 	position: relative;
+	/* min() faz o letterbox automatico: limita pela largura ou pela altura, o que apertar primeiro */
 	width: min(100vw, calc(100vh * 4 / 3));
 	height: min(100vh, calc(100vw * 3 / 4));
 	aspect-ratio: 4 / 3;
 	overflow: hidden;
+	/* começa invisivel — a animacao gameFadeIn que revela */
 	opacity: 0;
 	animation: gameFadeIn 0.7s ease-out forwards;
+	/* scanlines sutis sobre o fundo escuro, da aquela vibe de CRT */
 	background:
 		repeating-linear-gradient(
 			180deg,
@@ -52,11 +56,13 @@ body {
 	border: 2px solid #020206;
 }
 
+/* overlay fixo que cobre a tela toda durante a transicao de saida — z-index alto pra ficar na frente de tudo */
 .screen-transition-game {
 	position: fixed;
 	inset: 0;
 	background: #000;
 	z-index: 2000;
+	/* invisivel por padrao, so aparece quando o JS adiciona a classe --active */
 	opacity: 0;
 	pointer-events: none;
 }
@@ -100,6 +106,7 @@ body {
 	animation-delay: 0s;
 }
 
+/* animation-delay negativo faz a animacao comecar no meio — os dois objetos ficam fora de fase */
 .bg-star-destroyer {
 	width: clamp(200px, 54vmin, 410px);
 	height: auto;
@@ -110,11 +117,13 @@ body {
 
 .star {
 	position: absolute;
+	/* tamanho e cor vem do JS via custom properties — cada estrela tem o seu proprio valor */
 	width: var(--star-w, 2px);
 	height: var(--star-h, 2px);
 	background: var(--star-color, #dfe8ff);
 	opacity: 0.8;
 	image-rendering: pixelated;
+	/* avisa o browser pra criar camada separada — evita repaint a cada frame do loop de animacao */
 	will-change: transform, opacity;
 }
 
@@ -200,6 +209,7 @@ body {
 	align-items: center;
 	justify-content: flex-end;
 	gap: clamp(3px, 0.8vmin, 8px);
+	/* min-width fixo pra 3 icones — evita o placar pular de tamanho quando perde vida */
 	min-width: calc(clamp(42px, 9.6vmin, 90px) * 3 + clamp(3px, 0.8vmin, 8px) * 2);
 	z-index: 6;
 	user-select: none;
@@ -210,7 +220,7 @@ body {
 	height: auto;
 	image-rendering: pixelated;
 	display: block;
-	margin: -5%;
+	margin: -5%; /* sobreposicao leve entre icones, efeito de pilha */
 }
 
 .life-count {
@@ -223,6 +233,7 @@ body {
 }
 
 
+/* overlay fica no DOM mas invisivel — o JS adiciona --visible pra fazer o fade in */
 .game-over-overlay {
 	position: absolute;
 	inset: 0;
@@ -233,7 +244,7 @@ body {
 	z-index: 10;
 	opacity: 0;
 	transition: opacity 0.35s ease;
-	pointer-events: none;
+	pointer-events: none; /* bloqueado enquanto invisivel, habilitado junto com --visible */
 }
 
 .game-over-overlay--visible {
@@ -330,6 +341,7 @@ body {
 }
 
 
+/* mesmo esquema do game-over — invisivel por padrao, JS adiciona --visible */
 .pause-overlay {
 	position: absolute;
 	inset: 0;

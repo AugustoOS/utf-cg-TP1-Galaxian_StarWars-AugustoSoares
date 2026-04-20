@@ -15,7 +15,7 @@ Game.activateEnemyShotFromEnemy = function activateEnemyShotFromEnemy(enemy) {
         return false;
     }
 
-    var playerBox = Game.getPlayerRenderBox ? Game.getPlayerRenderBox() : null;
+    var playerBox = Game.getPlayerRenderBox ? Game.getPlayerRenderBox() : null; // mira no centro da nave; fallback pro meio da tela se o WebGL ainda nao inicializou
     var targetX = playerBox
         ? playerBox.x + playerBox.width / 2
         : Game.refs.gameFrame.clientWidth / 2;
@@ -26,17 +26,18 @@ Game.activateEnemyShotFromEnemy = function activateEnemyShotFromEnemy(enemy) {
     var startX = enemy.offsetLeft + enemy.offsetWidth / 2;
     var startY = enemy.offsetTop + enemy.offsetHeight / 2;
 
+    // transforma a direcao em vetor unitario e multiplica pela velocidade
     var dx = targetX - startX;
     var dy = targetY - startY;
-    var dist = Math.hypot(dx, dy) || 1;
+    var dist = Math.hypot(dx, dy) || 1; // || 1 evita divisao por zero se o inimigo ta em cima do jogador
     var speed = Game.scale(230);
 
-    var shotEl = Game.refs.enemyShot.cloneNode(false);
+    var shotEl = Game.refs.enemyShot.cloneNode(false); // clona o elemento do tiro template em vez de criar do zero
     shotEl.style.display = 'block';
     shotEl.alt = 'Tiro inimigo';
     Game.refs.gameFrame.appendChild(shotEl);
 
-    var hw = shotEl.offsetWidth / 2 || 16;
+    var hw = shotEl.offsetWidth / 2 || 16; // centraliza o elemento no ponto de origem
     var hh = shotEl.offsetHeight / 2 || 16;
     shotEl.style.left = (startX - hw) + 'px';
     shotEl.style.top = (startY - hh) + 'px';
@@ -100,6 +101,7 @@ Game.handlePlayerDeath = function handlePlayerDeath() {
         Game.refs.playerShot.style.display = 'none';
         Game.refs.playerShip.style.display = 'none';
 
+        // cancela todos os rasantes ativos e volta os inimigos pro grid antes de mostrar game over
         Game.state.enemyMovement.diveGroups.forEach(function (group) {
             group.wingmen.forEach(function (w) {
                 if (Game.state.enemies.includes(w)) {
@@ -152,11 +154,9 @@ Game.checkShotEnemyCollision = function checkShotEnemyCollision() {
     if (!Game.state.playerShot.active) return;
 
     var shotRect = Game.getShotTightRect();
-    var movement = Game.state.enemyMovement;
 
     for (var i = 0; i < Game.state.enemies.length; i += 1) {
-        var enemy    = Game.state.enemies[i];
-        var enemyRect = Game.getEnemyTightRect(enemy);
+        var enemyRect = Game.getEnemyTightRect(Game.state.enemies[i]);
 
         if (!(shotRect.left   < enemyRect.right  &&
               shotRect.right  > enemyRect.left   &&
@@ -165,41 +165,45 @@ Game.checkShotEnemyCollision = function checkShotEnemyCollision() {
             continue;
         }
 
+        
         var leaderGroupIdx = -1;
-        for (var g = 0; g < movement.diveGroups.length; g += 1) {
-            if (movement.diveGroups[g].leader === enemy) { leaderGroupIdx = g; break; }
+        for (var g = 0; g < Game.state.enemyMovement.diveGroups.length; g += 1) { // descobre se o inimigo morto era lider de algum grupo de rasante
+            if (Game.state.enemyMovement.diveGroups[g].leader === Game.state.enemies[i]) { leaderGroupIdx = g; break; }
         }
 
-
-        for (var g = 0; g < movement.diveGroups.length; g += 1) {
-            var wi = movement.diveGroups[g].wingmen.indexOf(enemy);
+        // se nao era lider, remove ele do grupo sem matar o rasante inteiro
+        for (var g = 0; g < Game.state.enemyMovement.diveGroups.length; g += 1) {
+            var wi = Game.state.enemyMovement.diveGroups[g].wingmen.indexOf(Game.state.enemies[i]);
             if (wi !== -1) {
-                movement.diveGroups[g].wingmen.splice(wi, 1);
-                movement.diveGroups[g].wingmenBeziers.splice(wi, 1);
+                Game.state.enemyMovement.diveGroups[g].wingmen.splice(wi, 1);
+                Game.state.enemyMovement.diveGroups[g].wingmenBeziers.splice(wi, 1);
                 break;
             }
         }
 
-
-        enemy.remove();
+        
+        var destroyedEnemy = Game.state.enemies[i]; // salva referencia antes do splice — depois disso enemies[i] ja e outro
+        destroyedEnemy.remove();
         Game.state.enemies.splice(i, 1);
 
         Game.hidePlayerShot();
-        Game.updateScore(Game.getEnemyScore(enemy.alt.split(' ').pop().toLowerCase()));
+        Game.updateScore(Game.getEnemyScore(destroyedEnemy.alt.split(' ').pop().toLowerCase()));
 
-        var rem       = Game.state.enemies.length;
+        var enemiesRemaining = Game.state.enemies.length;
         // Acelera o ritmo conforme limpa a wave.
-        var decrement = rem > 15 ? 150 : rem > 8 ? 250 : 400;
-        movement.currentDiveCooldownMs = Math.max(600, movement.currentDiveCooldownMs - decrement);
+        var decrement = enemiesRemaining > 15 ? 150 : enemiesRemaining > 8 ? 250 : 400;
+        Game.state.enemyMovement.currentDiveCooldownMs = Math.max(600, Game.state.enemyMovement.currentDiveCooldownMs - decrement);
 
         var lim = Game.getHorizontalMovementLimits ? Game.getHorizontalMovementLimits() : { left: 0, right: 0 };
-        movement.offsetX = Math.min(Math.max(movement.offsetX, -lim.left), lim.right);
+        Game.state.enemyMovement.offsetX = Math.min(Math.max(Game.state.enemyMovement.offsetX, -lim.left), lim.right);
 
 
         if (leaderGroupIdx !== -1) {
-            var group = movement.diveGroups[leaderGroupIdx];
+            var group = Game.state.enemyMovement.diveGroups[leaderGroupIdx];
+            // filtra as naves nao lideres que ainda estao vivas (podem ter morrido no mesmo frame)
             var alive = group.wingmen.filter(function (w) { return Game.state.enemies.includes(w); });
             if (alive.length > 0) {
+                // promove para lider e herda a curva de bezier dele
                 var newLeader = alive[0];
                 var nwi = group.wingmen.indexOf(newLeader);
                 var promotedBezier = group.wingmenBeziers[nwi];
@@ -210,7 +214,8 @@ Game.checkShotEnemyCollision = function checkShotEnemyCollision() {
                     group.leaderBezier = promotedBezier;
                 }
             } else {
-                movement.diveGroups.splice(leaderGroupIdx, 1);
+                // grupo inteiro morreu, agenda o proximo rasante
+                Game.state.enemyMovement.diveGroups.splice(leaderGroupIdx, 1);
                 Game.scheduleNextEnemyDive(performance.now());
             }
         }
@@ -219,7 +224,7 @@ Game.checkShotEnemyCollision = function checkShotEnemyCollision() {
             Game.clearEnemyShots();
             Game.state.lives = Number(Game.state.lives) + 1;
             Game.updateLives();
-            Game.applyFleetClearDifficultyIncrease();
+            Game.DifficultyIncrease();
             Game.restartEnemyFormation();
         }
 
@@ -253,16 +258,17 @@ Game.updateEnemyShots = function updateEnemyShots(currentTime) {
     var fw = Game.refs.gameFrame.clientWidth;
     var fh = Game.refs.gameFrame.clientHeight;
 
-    for (var i = state.enemyShots.length - 1; i >= 0; i -= 1) {
-        var shot = state.enemyShots[i];
+    for (var i = state.enemyShots.length - 1; i >= 0; i -= 1) { // itera de tras pra frente porque pode remover elementos no meio do caminho
+        var shot = state.enemyShots[i]; // atualiza posicao do tiro
         shot.x += shot.vx * dt;
         shot.y += shot.vy * dt;
 
-        var hw = shot.element.offsetWidth / 2 || 16;
+        var hw = shot.element.offsetWidth / 2 || 16;   // centraliza o elemento no ponto de origem
         var hh = shot.element.offsetHeight / 2 || 16;
         shot.element.style.left = (shot.x - hw) + 'px';
         shot.element.style.top = (shot.y - hh) + 'px';
 
+        // descarta o tiro se saiu da tela (margem de 40px pra nao sumir antes de sair visualmente)
         if (shot.y > fh + 40 || shot.y < -40 || shot.x < -40 || shot.x > fw + 40) {
             shot.element.remove();
             state.enemyShots.splice(i, 1);
@@ -270,7 +276,7 @@ Game.updateEnemyShots = function updateEnemyShots(currentTime) {
         }
 
         if (!state.gameOver && !state.invincible) {
-            var shotRect = { left: shot.x - hw, right: shot.x + hw, top: shot.y - hh, bottom: shot.y + hh };
+            var shotRect = { left: shot.x - hw, right: shot.x + hw, top: shot.y - hh, bottom: shot.y + hh }; // cria um retangulo do tiro pra facilitar a colisao
             if (Game.isRectIntersectingTriangle(shotRect, Game.getPlayerTriangle())) {
                 shot.element.remove();
                 state.enemyShots.splice(i, 1);

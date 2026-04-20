@@ -1,19 +1,23 @@
-﻿window.Game = window.Game ? window.Game : {};
+﻿// Namespace global do jogo — evita poluir o escopo global com variaveis soltas. Se o objeto ja existe (outro script carregou antes), aproveita; senao cria vazio.
+window.Game = window.Game ? window.Game : {};
 
+// 800x600
 Game.VIRTUAL_W = 800;
 Game.VIRTUAL_H = 600;
 
 // Base de escala unica para manter gameplay proporcional em resolucoes diferentes.
 Game.getScale = function getScale() {
-	const fw = Game.refs.gameFrame.clientWidth;
-	const fh = Game.refs.gameFrame.clientHeight;
+	var fw = Game.refs.gameFrame.clientWidth;
+	var fh = Game.refs.gameFrame.clientHeight;
 	return Math.min(fw / Game.VIRTUAL_W, fh / Game.VIRTUAL_H);
 };
 
+// valor na resolucao virtual -> pixels reais
 Game.scale = function scale(value) {
 	return value * Game.getScale();
 };
 
+// Fiz esse "define" pra não ter que ficar puxando queryselector toda hora
 Game.refs = {
     gameFrame:  document.querySelector('.game-frame'),
     starfield:  document.querySelector('.starfield'),
@@ -26,21 +30,23 @@ Game.refs = {
 };
 
 
+// Estado central do jogo
 Game.state = {
 	score: 0,
 	gameOver: false,
 	paused: false,
 	lives: 3,
-	invincible: false,
+	
+	invincible: false, // quando perder vida, essa flag deixa o player invencional por um tempo
 	enemies: [],
 	enemyShots: [],
 	enemyShotsLastTime: 0,
 	movement: {
 		left: false,
 		right: false,
-		get speed() { return Game.scale(360); },
-		x: Game.refs.gameFrame.clientWidth / 2,
-		lastTime: 0,
+		get speed() { return Game.scale(360); }, // recalcula a velocidade se a janela for redimensionada.
+		x: Game.refs.gameFrame.clientWidth / 2, // player começa no meio
+		lastTime: 0, // esses last times sao pra calcular o delta time entre frames e mover os objetos
 	},
 	playerShot: {
 		active: false,
@@ -50,24 +56,28 @@ Game.state = {
 		lastTime: 0,
 		brakesAlreadyTriggered: false,
 	},
+	// Estado do render WebGL — separado do gameplay pra nao misturar logicas.
 	render: {
-		ready: false,
+		ready: false, // pra saber se o WebGL inicializou textura — se nao, cai num fallback.
 		playerTexture: null,
 		shotTexture: null,
-		renderLoopActive: false,
+		renderLoopActive: false, // pra garantir que o loop de renderizacao so seja iniciado uma vez, mesmo que, sla, a inicializacao do WebGL seja chamada varias vezes.
 	},
 	enemyMovement: {
 		offsetX: 0,
+		// passeio, rasante e retorno dos inimigos.
 		get baseSpeed()   { return Game.scale(50);  },
 		get diveSpeed()   { return Game.scale(130); },
 		get returnSpeed() { return Game.scale(170); },
-		diveCooldownMs: 5000,
+		diveCooldownMs: 5000, // tempo inicial de cooldown entre rasantes, com o passar do jogo diminui pra fica mais dificil
 		currentDiveCooldownMs: 5000,
-		nextDiveAt: 0,
+		nextDiveAt: 0, // 
 		diveGroups: [],
+		// -1 = movendo pra esquerda, 1 = pra direita.
 		direction: -1,
 		lastTime: 0,
 		maxRowWidth: 0,
+		// Quando o jogador atira, os inimigos freiam brevemente — estado desse efeito.
 		defensiveBrakeActive: false,
 	},
 	background: {
@@ -84,16 +94,20 @@ Game.enemyRows = [
 	{ src: '../images/Enemy2.png', color: 'green',  count: 10 },
 ];
 
+// A chave e o src da imagem — evita refazer o scan de pixels a cada frame.
 Game.imageTightBoundsCache = {};
 
+// Varre os pixels da imagem e retorna a caixa minima que envolve os pixels opacos.
+// Isso permite colisao precisa ignorando as areas transparentes ao redor do sprite.
 Game.computeImageTightBounds = function computeImageTightBounds(imgElement) {
-	const fallbackBounds = { fracX: 0, fracY: 0, fracW: 1, fracH: 1 };
+	// Fallback: caixa inteira da imagem, caso nao consiga processar.
+	var fallbackBounds = { fracX: 0, fracY: 0, fracW: 1, fracH: 1 };
 
 	if (!imgElement || !imgElement.naturalWidth || !imgElement.naturalHeight) {
 		return fallbackBounds;
 	}
 
-	const src = imgElement.currentSrc || imgElement.src;
+	var src = imgElement.currentSrc || imgElement.src;
 	if (src && Game.imageTightBoundsCache[src]) {
 		// Cache evita recortar alpha da mesma imagem todo frame.
 		return Game.imageTightBoundsCache[src];
@@ -110,7 +124,7 @@ Game.computeImageTightBounds = function computeImageTightBounds(imgElement) {
 
 	let minX = w, minY = h, maxX = 0, maxY = 0, hasOpaquePixel = false;
 
-	for (let y = 0; y < h; y += 1) {
+	for (let y = 0; y < h; y += 1) { // varre os pixels procurando os limites dos opacos
 		for (let x = 0; x < w; x += 1) {
 			const alpha = data[(y * w + x) * 4 + 3];
 			if (alpha >= 10) {
@@ -123,7 +137,8 @@ Game.computeImageTightBounds = function computeImageTightBounds(imgElement) {
 		}
 	}
 
-	const bounds = hasOpaquePixel ? {
+	// Converte os limites de pixels absolutos para fracoes (0..1) relativas ao tamanho da imagem.
+	var bounds = hasOpaquePixel ? {
 		fracX: minX / w,
 		fracY: minY / h,
 		fracW: (maxX - minX + 1) / w,
@@ -134,6 +149,7 @@ Game.computeImageTightBounds = function computeImageTightBounds(imgElement) {
 	return bounds;
 };
 
+// Retorna o retangulo de colisao justo do inimigo, em coordenadas do DOM.
 Game.getEnemyTightRect = function getEnemyTightRect(enemy) {
 	const b = Game.computeImageTightBounds(enemy);
 	return {
@@ -144,14 +160,16 @@ Game.getEnemyTightRect = function getEnemyTightRect(enemy) {
 	};
 };
 
+// Atalho que pega o retangulo do tiro na posicao Y atual.
 Game.getShotTightRect = function getShotTightRect() {
 	return Game.getShotTightRectAtY(Game.state.playerShot.y);
 };
 
+// Versao parametrizada do retangulo do tiro — usada pra prever colisao antes de mover.
 Game.getShotTightRectAtY = function getShotTightRectAtY(shotY) {
-	const b = Game.computeImageTightBounds(Game.refs.playerShot);
-	const w = Game.refs.playerShot.offsetWidth;
-	const h = Game.refs.playerShot.offsetHeight;
+	var b = Game.computeImageTightBounds(Game.refs.playerShot);
+	var w = Game.refs.playerShot.offsetWidth;
+	var h = Game.refs.playerShot.offsetHeight;
 	return {
 		left:   Game.state.playerShot.x - (w / 2) + (b.fracX * w),
 		right:  Game.state.playerShot.x - (w / 2) + ((b.fracX + b.fracW) * w),
@@ -160,6 +178,7 @@ Game.getShotTightRectAtY = function getShotTightRectAtY(shotY) {
 	};
 };
 
+// Retangulo de colisao da nave do jogador — usa a caixa de render do WebGL como base.
 Game.getPlayerTightRect = function getPlayerTightRect() {
 	const b  = Game.computeImageTightBounds(Game.refs.playerShip);
 	const pb = Game.getPlayerRenderBox();
@@ -171,6 +190,7 @@ Game.getPlayerTightRect = function getPlayerTightRect() {
 	};
 };
 
+// A ponta fica no topo (frente da nave) e a base embaixo — reflete o formato visual.
 Game.getPlayerTriangle = function getPlayerTriangle() {
 	const r = Game.getPlayerTightRect();
 	return [
@@ -180,6 +200,7 @@ Game.getPlayerTriangle = function getPlayerTriangle() {
 	];
 };
 
+// Testa se um ponto esta dentro de um triangulo usando coordenadas baricentricas. Se os tres pesos (alpha, beta, gamma) forem >= 0, o ponto esta dentro.
 Game.isPointInsideTriangle = function isPointInsideTriangle(point, triangle) {
 	const [a, b, c] = triangle;
 	const denom = ((b.y - c.y) * (a.x - c.x)) + ((c.x - b.x) * (a.y - c.y));
@@ -194,12 +215,13 @@ Game.isPointInsideRect = function isPointInsideRect(point, rect) {
 		&& point.y >= rect.top  && point.y <= rect.bottom;
 };
 
+// Verifica se dois segmentos de reta se cruzam (algoritmo de orientacao).
 Game.doSegmentsIntersect = function doSegmentsIntersect(sA, eA, sB, eB) {
-	const orient = function(p, q, r) {
+	var orient = function(p, q, r) {
 		const v = ((q.y - p.y) * (r.x - q.x)) - ((q.x - p.x) * (r.y - q.y));
 		return v === 0 ? 0 : v > 0 ? 1 : 2;
 	};
-	const onSeg = function(p, q, r) {
+	var onSeg = function(p, q, r) {
 		return q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) &&
 		       q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
 	};
@@ -213,8 +235,10 @@ Game.doSegmentsIntersect = function doSegmentsIntersect(sA, eA, sB, eB) {
 	return false;
 };
 
+// Colisao completa retangulo x triangulo: testa pontos dentro, depois arestas cruzadas.
+// Tres casos: ponto do ret dentro do tri, ponto do tri dentro do ret, ou arestas se cruzam.
 Game.isRectIntersectingTriangle = function isRectIntersectingTriangle(rect, triangle) {
-	const rp = [
+	var rp = [
 		{ x: rect.left,  y: rect.top    },
 		{ x: rect.right, y: rect.top    },
 		{ x: rect.right, y: rect.bottom },

@@ -17,7 +17,7 @@
 
     const audio = document.querySelector('audio');
     audio.volume = 0.1;
-    audio.muted = true;
+    audio.muted = false;
     const startGameAudio = new Audio('../sounds/start_game_xwing_turn-on.mp3');
     startGameAudio.preload = 'auto';
     startGameAudio.volume = 0.35;

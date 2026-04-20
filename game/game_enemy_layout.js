@@ -1,9 +1,11 @@
 ﻿window.Game = window.Game ? window.Game : {};
 
+// retorna so os inimigos que estao no grid — exclui quem ta mergulhando ou voltando. SÓ PODE SER SORTEADO QUEM ESTÁ NA FROTA DE BOA
 Game.getFormationEnemies = function getFormationEnemies() {
     return Game.state.enemies.filter((enemy) => enemy.dataset.diving !== '1' && enemy.dataset.returning !== '1');
 };
 
+// calcula onde esse inimigo deveria estar no grid — usado pra mover de volta apos rasante
 Game.getEnemyFormationPosition = function getEnemyFormationPosition(enemy) {
     const gapX = Game.scale(15);
     const enemyWidth = enemy.offsetWidth;
@@ -14,6 +16,7 @@ Game.getEnemyFormationPosition = function getEnemyFormationPosition(enemy) {
     const rowIndex = Number(enemy.dataset.row);
     const columnIndex = Number(enemy.dataset.column);
     const enemyCount = Number(enemy.dataset.count);
+    // centraliza a fileira na tela e desloca pelo offsetX do movimento lateral do grid
     const rowWidth = (enemyCount * enemyWidth) + ((enemyCount - 1) * gapX);
     const startX = ((Game.refs.gameFrame.clientWidth - rowWidth) / 2) + Game.state.enemyMovement.offsetX;
 
@@ -23,11 +26,12 @@ Game.getEnemyFormationPosition = function getEnemyFormationPosition(enemy) {
     };
 };
 
+// quanto menos inimigos sobram, mais grupos podem mergulhar ao mesmo tempo
 Game.getMaxConcurrentDives = function getMaxConcurrentDives() {
     const remaining = Game.state.enemies.length;
     if (remaining <= 5)  return 4;
-    if (remaining <= 11) return 3;
-    if (remaining <= 18) return 2;
+    if (remaining <= 14) return 3;
+    if (remaining <= 20) return 2;
     return 1;
 };
 
@@ -35,7 +39,8 @@ Game.getDiveCooldownMs = function getDiveCooldownMs() {
     return Game.state.enemyMovement.currentDiveCooldownMs;
 };
 
-Game.applyFleetClearDifficultyIncrease = function applyFleetClearDifficultyIncrease() {
+// a cada wave limpa, diminui o cooldown base permanentemente (minimo de 600ms)
+Game.DifficultyIncrease = function DifficultyIncrease() {
     const movement = Game.state.enemyMovement;
     movement.diveCooldownMs = Math.max(600, movement.diveCooldownMs - 1500);
 };
@@ -45,18 +50,21 @@ Game.scheduleNextEnemyDive = function scheduleNextEnemyDive(currentTime) {
     movement.nextDiveAt = currentTime + Game.getDiveCooldownMs();
 };
 
+// formula cubica de bezier — t vai de 0 a 1 e devolve o ponto na curva
 Game.bezierPoint = function bezierPoint(p0, p1, p2, p3, t) {
     const mt = 1 - t;
-    return {
+    return { // peguei da net essa formula aqui kkkk
         x: (mt * mt * mt * p0.x) + (3 * mt * mt * t * p1.x) + (3 * mt * t * t * p2.x) + (t * t * t * p3.x),
         y: (mt * mt * mt * p0.y) + (3 * mt * mt * t * p1.y) + (3 * mt * t * t * p2.y) + (t * t * t * p3.y),
     };
 };
 
+// gera os dois pontos de controle da curva com aleatoriedade pra cada rasante ter trajetoria diferente
 Game.createBezierPath = function createBezierPath(startX, startY, targetX, targetY) {
     const fw = Game.refs.gameFrame.clientWidth;
     const fh = Game.refs.gameFrame.clientHeight;
 
+    // p1 desvia pra um lado aleatorio logo no inicio do mergulho
     const side1 = Math.random() < 0.5 ? 1 : -1;
     const p1 = {
         x: Math.max(fw * 0.05, Math.min(fw * 0.95,
@@ -64,6 +72,7 @@ Game.createBezierPath = function createBezierPath(startX, startY, targetX, targe
         y: startY + (targetY - startY) * (0.1 + Math.random() * 0.3),
     };
 
+    // p2 geralmente vai pro lado oposto de p1 pra criar a curva em S caracteristica
     const side2 = -side1 * (Math.random() < 0.65 ? 1 : -1);
     const p2 = {
         x: Math.max(fw * 0.05, Math.min(fw * 0.95,
@@ -150,6 +159,7 @@ Game.startRandomEnemyDive = function startRandomEnemyDive(currentTime) {
 
         const wingmen = others.slice(0, Math.min(3, others.length));
         wingmen.forEach((w) => {
+            // pequeno offset lateral pra cada ala nao mergulhar no mesmo ponto exato
             const wingOffset = (Math.random() - 0.5) * Game.scale(50);
             const wBezier = Game.createBezierPath(
                 w.offsetLeft,
@@ -182,9 +192,9 @@ Game.updateEnemyDive = function updateEnemyDive(currentTime, deltaTime) {
         return;
     }
 
-    const diveDuration  = 2.6;
-    const tStep         = deltaTime / diveDuration;
-    const completedIdxs = [];
+    const diveDuration  = 2.6; // segundos que o mergulho leva de ponta a ponta
+    const tStep         = deltaTime / diveDuration; // avanco de t por frame
+    const completedIdxs = []; // grupos que terminaram nesse frame — removidos depois do forEach
 
     movement.diveGroups.forEach((group, groupIndex) => {
 
@@ -240,6 +250,7 @@ Game.updateEnemyDive = function updateEnemyDive(currentTime, deltaTime) {
                 w.style.top  = `${wp.y}px`;
             });
 
+            // atira nos limiares de t pre-definidos (ex: 30% e 42% do mergulho)
             while (group.shotsFired < group.shotThresholds.length
                    && t >= group.shotThresholds[group.shotsFired]) {
                 Game._fireDiveShot(group.leader);
@@ -263,12 +274,13 @@ Game.updateEnemyDive = function updateEnemyDive(currentTime, deltaTime) {
             const step = movement.returnSpeed * deltaTime;
             let allArrived = true;
 
+            // move o inimigo em direcao ao slot do grid a velocidade constante; retorna true quando chegou
             const moveToSlot = function moveToSlot(enemy) {
                 const target = Game.getEnemyFormationPosition(enemy);
                 const toX = target.x - enemy.offsetLeft;
                 const toY = target.y - enemy.offsetTop;
                 const dist = Math.hypot(toX, toY);
-                if (dist < 2) {
+                if (dist < 2) { // considera chegado se ta a menos de 2px do alvo
                     enemy.style.left = `${target.x}px`;
                     enemy.style.top  = `${target.y}px`;
                     enemy.dataset.diving = '0';
@@ -300,11 +312,13 @@ Game.updateEnemyDive = function updateEnemyDive(currentTime, deltaTime) {
         }
     });
 
+    // remove do fim pro inicio pra nao baguncar os indices ao dar splice
     const completedGroups = completedIdxs.map(idx => movement.diveGroups[idx]);
     for (let i = completedIdxs.length - 1; i >= 0; i -= 1) {
         movement.diveGroups.splice(completedIdxs[i], 1);
     }
 
+    // limpa o flag returning so depois de remover do array.
     completedGroups.forEach(group => {
         if (Game.state.enemies.includes(group.leader)) {
             group.leader.dataset.returning = '0';
