@@ -2,7 +2,19 @@
 
 Projeto de jogo 2D inspirado em Galaxian/Star Wars, com menu interativo, gameplay modular em JavaScript e renderizacao hibrida (DOM + WebGL).
 
+### Demonstração - youtube
+
+https://youtu.be/hjQP7gitO20
+
 ## Estrutura e responsabilidade de cada arquivo
+
+### Teclas
+
+Espaço: tiro
+Esc: pause/unpause
+Seta esquerda/'a' : nave para a esquerda
+Seta direita/'d' : nave para a direita
+'r' : reinicia o jogo
 
 ### Menu
 
